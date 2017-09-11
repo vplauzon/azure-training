@@ -1,2 +1,2 @@
-# azure-training
-Different training material on Azure
+# Azure Training
+Different training material on Azure I authored.

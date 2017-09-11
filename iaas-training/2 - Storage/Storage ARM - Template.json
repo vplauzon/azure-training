@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Storage Account Name": {
+      "defaultValue": "<yourprefix>armsto",
+      "type": "string"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('Storage Account Name')]",
+      "sku": {
+        "name": "Standard_RAGRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[concat('Storage Account - ', parameters('Storage Account Name'))]"
+      },
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    }
+  ]
+}

@@ -36,7 +36,12 @@ Let's create a hierarchy.
 
 <ol>
     <li>
-        Let's open the ADLS resource and select <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />
+        <p>
+            Let's open the ADLS resource and select
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />
+        </p>
     </li>
     <li>
         bla

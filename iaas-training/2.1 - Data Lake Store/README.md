@@ -84,6 +84,20 @@ Let's give permissions, in the form of Access Control List (ACL) to folders.
             <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Access.png" />
         </p>
     </li>
+    <li>
+        <p>
+            Select <i>Add</i>
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Access.png" />
+        </p>
+    </li>
+    <li>
+        Select <i>Select User or Group</i>
+    </li>
+    <li>
+        In the search box, type the account name of a colleague (or at least a user account present in your Azure Active Directory tenant)
+    </li>
 </ol>
    
 

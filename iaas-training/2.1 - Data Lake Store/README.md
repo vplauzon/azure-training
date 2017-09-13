@@ -112,7 +112,7 @@ Let's give permissions, in the form of Access Control List (ACL) to folders.
             Select <i>Add to this folder and all children</i>
         </p>
         <p>
-            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Permissions.png" />
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Permissions.PNG" />
         </p>
     </li>
     <li>

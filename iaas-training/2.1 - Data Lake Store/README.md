@@ -1,4 +1,3 @@
-
 # Azure Data Lake Store Lab
 
 ## Lab Objectives
@@ -37,14 +36,33 @@ Let's create a hierarchy.
 <ol>
     <li>
         <p>
-            Let's open the ADLS resource and select the *Data Explorer*
+            Let's open the ADLS resource and select the <i>Data Explorer</i>
         </p>
         <p>
             <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />
         </p>
     </li>
     <li>
-        bla
+        <p>
+            Let's create a <i>New Folder</i>
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/NewFolder.PNG" />
+        </p>
+    </li>
+    <li>
+        Let's call the folder "HR" and click <i>OK</i>
+    </li>
+    <li>
+        Let's create two other folders:  "Finance" & "Risk"
+    </li>
+    <li>
+        <p>
+            The folder structure should look like this:
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/3Folders.PNG" />
+        </p>
     </li>
 </ol>
 

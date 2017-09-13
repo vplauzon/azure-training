@@ -47,7 +47,7 @@ Let's create a hierarchy.
             Let's create a <i>New Folder</i>
         </p>
         <p>
-            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/NewFolder.PNG" />
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/NewFolder.png" />
         </p>
     </li>
     <li>

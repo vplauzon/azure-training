@@ -1,3 +1,4 @@
+
 # Azure Data Lake Store Lab
 
 ## Lab Objectives
@@ -20,6 +21,8 @@ Parameter | Description
 --- | ---
 Account Name | Account Name
 Other | X
+Y | Z
+W | T
 
 ## Notes
 

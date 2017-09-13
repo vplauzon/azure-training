@@ -1,4 +1,4 @@
-### Storage Lab ###
+# Storage Lab
 
 The lab instructions are <a
 href="https://github.com/vplauzon/azure-training/blob/master/iaas-training/2%20-%20Storage/ARM%20Lab%20-%20Storage%20-%20Read%20Me.docx?raw=true">

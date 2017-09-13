@@ -25,6 +25,8 @@ The template creates an ADLS account within the region of the resource group.  S
 
 The template contains the following parameters:
 
+
+
 Parameter | Description
 --- | ---
 adlStoreName | Name of the Data Lake Store account to create.  It needs to be globally unique.
@@ -67,6 +69,23 @@ Let's create a hierarchy.
 </ol>
 
 ## Access Control
+
+Let's give permissions, in the form of Access Control List (ACL) to folders.
+
+<ol>
+    <li>
+        Select the "Finance" folder
+    </li>
+    <li>
+        <p>
+            Select <i>Access</i>
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Access.png" />
+        </p>
+    </li>
+</ol>
+   
 
 ## Notes
 

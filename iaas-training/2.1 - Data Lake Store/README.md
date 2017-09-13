@@ -37,7 +37,7 @@ Let's create a hierarchy.
 <ol>
     <li>
         <p>
-            Let's open the ADLS resource and select
+            Let's open the ADLS resource and select the *Data Explorer*
         </p>
         <p>
             <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />

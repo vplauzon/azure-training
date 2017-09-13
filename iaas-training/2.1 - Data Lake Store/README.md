@@ -1,3 +1,4 @@
+
 # Azure Data Lake Store Lab
 
 ## Lab Objectives
@@ -33,10 +34,14 @@ adlStoreName | Name of the Data Lake Store account to create.  It needs to be gl
 
 Let's create a hierarchy.
 
-1. Let's open the ADLS resource and select <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />
-1. BLa
-1. Bla
-1. requedebla
+<ol>
+    <li>
+        Let's open the ADLS resource and select <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/DataExplorer.PNG" />
+    </li>
+    <li>
+        bla
+    </li>
+</ol>
 
 ## Access Control
 

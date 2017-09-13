@@ -19,7 +19,7 @@ target="_blank">
 **Note that ADLS is only available in 3 regions**:
 * East US 2
 * North Europe
-* Central US.
+* Central US
 
 The template creates an ADLS account within the region of the resource group.  So make sure to select one of those 3 regions for the resource group, otherwise the deployment will fail.
 
@@ -28,6 +28,14 @@ The template contains the following parameters:
 Parameter | Description
 --- | ---
 adlStoreName | Name of the Data Lake Store account to create.  It needs to be globally unique.
+
+## Create Hierarchy
+
+Let's create a hierarchy.
+
+Let's open the ADLS resource and select 
+
+## Access Control
 
 ## Notes
 

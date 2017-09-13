@@ -29,6 +29,14 @@ Parameter | Description
 --- | ---
 adlStoreName | Name of the Data Lake Store account to create.  It needs to be globally unique.
 
+## Create Hierarchy
+
+Let's create a hierarchy.
+
+Let's open the ADLS resource and select 
+
+## Access Control
+
 ## Notes
 
 ## Exercise

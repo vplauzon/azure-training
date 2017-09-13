@@ -98,12 +98,39 @@ Let's give permissions, in the form of Access Control List (ACL) to folders.
     <li>
         In the search box, type the account name of a colleague (or at least a user account present in your Azure Active Directory tenant)
     </li>
+    <li>
+        Select <i>Select</i>
+    </li>
+    <li>
+        Select <i>Select Permissions</i>
+    </li>
+    <li>
+        Select <i>Read</i>
+    </li>
+    <li>
+        <p>
+            Select <i>Add to this folder and all children</i>
+        </p>
+        <p>
+            <img src="https://github.com/vplauzon/azure-training/raw/master/iaas-training/2.1%20-%20Data%20Lake%20Store/images/Permissions.png" />
+        </p>
+    </li>
+    <li>
+        Select <i>OK</i>
+    </li>
 </ol>
    
 
 ## Notes
 
+By giving read / write permissions to groups (or specific users), we can create governance in the Data Lake.  For instance, a group of users could be responsible to analyse (read) HR data but another one could be responsible to populate the HR data.
+
 ## Exercise
+
+Try to script the creation of folders and permissions.
+
+HINT:  use <i>New-AzureRmDataLakeStoreItem</i> and <i>Set-AzureRmDataLakeStoreItemPermission</i>.
 
 ## Clean up
 
+Simply delete the resource group where you deploy the Data Lake Store.

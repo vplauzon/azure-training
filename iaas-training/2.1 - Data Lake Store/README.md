@@ -2,15 +2,11 @@
 
 ## Lab Objectives
 
-### Section X
+Create an Azure Data Lake Store (ADLS) account, populate a hierarchy & configure access control.
 
-## Notes
+### Create account
 
-## Exercise
-
-## Clean up
-
-This lab contains one ARM template that can be deployed:
+We will create a Data Lake Store account by deploying the following template:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvplauzon%2Fazure-training%2Fmaster%2Fiaas-training%2F2%20-%20Storage%2FStorage%20ARM%20-%20Template.json"
 target="_blank">
@@ -19,3 +15,15 @@ target="_blank">
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fvplauzon%2Fazure-training%2Fmaster%2Fiaas-training%2F2%20-%20Storage%2FStorage%20ARM%20-%20Template.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
+
+Parameter | Description
+--- | ---
+Account Name | Account Name
+Other | X
+
+## Notes
+
+## Exercise
+
+## Clean up
+

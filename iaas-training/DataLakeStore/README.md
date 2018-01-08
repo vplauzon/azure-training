@@ -35,9 +35,8 @@ adlStoreName | Name of the Data Lake Store account to create.  It needs to be gl
 
 Let's create a hierarchy.
 
-
 1. Let's open the ADLS resource and select the *Data Explorer*
-![](images/DataExplorer.PNG)
+...![](images/DataExplorer.PNG)
 1. Let's create a *New Folder*
 ![](images/NewFolder.png)
 1. Let's call the folder "HR" and click *OK*

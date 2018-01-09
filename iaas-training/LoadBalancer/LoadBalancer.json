@@ -10,7 +10,6 @@
       "type": "string"
     },
     "VM Admin Password": {
-      "defaultValue": null,
       "type": "securestring"
     },
     "VM Size": {

@@ -1,0 +1,640 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Public Domain Label": {
+      "type": "string"
+    },
+    "VM Admin User Name": {
+      "defaultValue": "myadmin",
+      "type": "string"
+    },
+    "VM Admin Password": {
+      "defaultValue": null,
+      "type": "securestring"
+    },
+    "VM Size": {
+      "defaultValue": "Standard_DS2_v2",
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2"
+      ],
+      "metadata": {
+        "description": "SKU of the VM."
+      }
+    },
+    "Fault Domain Count": {
+      "defaultValue": 3,
+      "type": "int"
+    },
+    "Front Instance Count": {
+      "defaultValue": 2,
+      "type": "int"
+    },
+    "Back Instance Count": {
+      "defaultValue": 2,
+      "type": "int"
+    }
+  },
+  "variables": {
+    "Front VM Prefix": "FrontVM",
+    "Back VM Prefix": "BackVM",
+    "Front NAT Rule Prefix": "sshNatRule",
+    "Front NIC Prefix": "FrontNic",
+    "Back NIC Prefix": "BackNic",
+    "VNet Name": "VM-vnet",
+    "VNet IP Range": "10.0.0.0/24",
+    "Front IP Range": "10.0.0.0/28",
+    "Back IP Range": "10.0.0.16/28",
+    "Public IP Name": "LB-PublicIP",
+    "Public LB Name": "PublicLB",
+    "Front Address Pool Name": "frontPool",
+    "Front NIC loop Name": "frontNicLoop",
+    "Front VM loop Name": "frontVMLoop",
+    "Front Availability Set Name": "frontAvailSet",
+    "Private LB Name": "PrivateLB",
+    "Back Address Pool Name": "backPool",
+    "Back NIC loop Name": "backNicLoop",
+    "Back VM loop Name": "backVMLoop",
+    "Back Availability Set Name": "backAvailSet"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('Public IP Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('Public Domain Label')]"
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2017-10-01",
+      "name": "frontNsg",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-HTTP-From-Internet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-SSH-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Health-Monitoring",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Inbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-to-VNet",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+        ],
+        "subnets": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2017-10-01",
+      "name": "backNsg",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-API-From-Front",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[variables('Back IP Range')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-SSH-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Health-Monitoring",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Inbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+        ],
+        "subnets": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('VNet Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'frontNsg')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'backNsg')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VNet IP Range')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "front",
+            "properties": {
+              "addressPrefix": "[variables('Front IP Range')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'frontNsg')]"
+              }
+            }
+          },
+          {
+            "name": "back",
+            "properties": {
+              "addressPrefix": "[variables('Back IP Range')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'backNsg')]"
+              }
+            }
+          }
+        ]
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('Public LB Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('Public IP Name'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('Public IP Name'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('Front Address Pool Name')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "Http",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+              },
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "loadDistribution": "Default",
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/backendAddressPools/', variables('Front Address Pool Name'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/probes/TCP-Probe')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "TCP-Probe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "outboundNatRules": [],
+        "inboundNatPools": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "apiVersion": "2017-10-01",
+      "copy": {
+        "name": "front-nat-rule-loop",
+        "count": "[parameters('Front Instance Count')]"
+      },
+      "name": "[concat(variables('Public LB Name'), '/', variables('Front NAT Rule Prefix'), '-', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('Public LB Name'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+        },
+        "protocol": "tcp",
+        "frontendPort": "[copyIndex(22)]",
+        "backendPort": 22
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('Private LB Name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name')), '/subnets/back')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('Back Address Pool Name')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "Http",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Private LB Name')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+              },
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp",
+              "loadDistribution": "Default",
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Private LB Name')), '/backendAddressPools/', variables('Back Address Pool Name'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Private LB Name')), '/probes/TCP-Probe')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "TCP-Probe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "outboundNatRules": []
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-10-01",
+      "copy": {
+        "name": "[variables('Front NIC loop Name')]",
+        "count": "[parameters('Front Instance Count')]"
+      },
+      "name": "[concat(variables('Front NIC Prefix'), '-', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name'))]",
+        "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/inboundNatRules/', variables('Front NAT Rule Prefix'), '-', copyIndex())]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name')), '/subnets/front')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/backendAddressPools/', variables('Front Address Pool Name'))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Public LB Name')), '/inboundNatRules/', variables('Front NAT Rule Prefix'), '-', copyIndex())]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-10-01",
+      "copy": {
+        "name": "[variables('Back NIC loop Name')]",
+        "count": "[parameters('Back Instance Count')]"
+      },
+      "name": "[concat(variables('Back NIC Prefix'), '-', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('Private LB Name'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNet Name')), '/subnets/back')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('Private LB Name')), '/backendAddressPools/', variables('Back Address Pool Name'))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": []
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2017-12-01",
+      "name": "[variables('Front Availability Set Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": "[parameters('Fault Domain Count')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2017-12-01",
+      "name": "[variables('Back Availability Set Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": "[parameters('Fault Domain Count')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-12-01",
+      "copy": {
+        "name": "[variables('Front VM loop Name')]",
+        "count": "[parameters('Front Instance Count')]"
+      },
+      "name": "[concat(variables('Front VM Prefix'), '-', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('Front NIC loop Name')]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('Front Availability Set Name'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('Front Availability Set Name'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('VM Size')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "OpenLogic",
+            "offer": "CentOS",
+            "sku": "7.3",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('Front VM Prefix'), '-', copyIndex())]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('Front VM Prefix'), '-', copyIndex())]",
+          "adminUsername": "[parameters('VM Admin User Name')]",
+          "adminPassword": "[parameters('VM Admin Password')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Front NIC Prefix'), '-', copyIndex()))]"
+            }
+          ]
+        }
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-12-01",
+      "copy": {
+        "name": "[variables('Back VM loop Name')]",
+        "count": "[parameters('Front Instance Count')]"
+      },
+      "name": "[concat(variables('Back VM Prefix'), '-', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('Back NIC loop Name')]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('Back Availability Set Name'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('Back Availability Set Name'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('VM Size')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "OpenLogic",
+            "offer": "CentOS",
+            "sku": "7.3",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('Back VM Prefix'), '-', copyIndex())]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('Back VM Prefix'), '-', copyIndex())]",
+          "adminUsername": "[parameters('VM Admin User Name')]",
+          "adminPassword": "[parameters('VM Admin Password')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Back NIC Prefix'), '-', copyIndex()))]"
+            }
+          ]
+        }
+      },
+      "resources": []
+    }
+  ]
+}

@@ -39,5 +39,38 @@ We recommend going through our [ARM Introduction](https://github.com/vplauzon/az
 
 ## CLI Experience
 
-1. Let's type
+1. Let's create a resource group:
 `az group create --name sto-cli --location eastus2`
+1. Let's create a storage in that resource group:
+`az storage account create --name vplstocli --resource-group sto-cli --location eastus2 --kind StorageV2 --sku Standard_LRS`
+1. We can valide through the portal that the configuration is the same as the storage account we created
+
+## ARM Template
+
+1. We do not need to create a new resource group ; we'll do that in the deployment process
+1. Let's deploy the ARM template [defined here](https://github.com/vplauzon/azure-training/blob/master/automation-intro/storage-arm-template.json):
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvplauzon%2Fazure-training%2Fmaster%2Fautomation-intro%2Fstorage-arm-template.json)
+1. This should pop up the Azure portal with an Azure Template form
+1. Let's fill the form:
+    * In *Resource Group*, select *Create new* and type *sto-arm*
+    * In *Location*, select *East US 2*
+    * In *Storage Account Name*, type a unique name, e.g. *vplstoarm*
+    ![ARM Template Form](images/portal-arm.png)
+1. Select the tick box *I agree to the terms and conditions stated above* after reading it
+1. Click *Purchase*
+1. Again, we can valide through the portal that the configuration is the same as the other storage accounts we've created
+
+This section showed how to deploy an ARM template from the portal.  We could also have deployed the ARM template using CLI (with `az group deployment create`) or PowerShell (with `New-AzureRmResourceGroupDeployment`).
+
+## Clean Up (CLI)
+
+Let's clean up the resource groups we have created.  Technically, there are no cost involved with the storage accounts we have created as long as there is no storage used.
+
+The following commands bypass the "Are you sure you want to perform this operation?".  Be careful you do not do this with resource groups containing valuable resources.
+
+1.  Type
+`az group delete --name sto-arm --no-wait -y`
+`az group delete --name sto-cli --no-wait -y`
+`az group delete --name sto-portal --no-wait -y`
+
+The commands do not prompt and return before the resource groups are deleted.  It deletes the resources under the resource group (i.e. storage accounts) before deleting the resource group.  The deletion should take about a minute.

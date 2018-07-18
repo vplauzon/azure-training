@@ -1,2 +1,3 @@
 # Azure Training
-Different training material on Azure I authored.
+
+Different Azure training material I authored.

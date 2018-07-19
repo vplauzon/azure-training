@@ -31,6 +31,8 @@ Get familiar with ARM using the Azure Portal, PowerShell, CLI & ARM Template.
 
 The CLI is a cross platform tool that can be installed on Windows, Linux & MacOS.  Here we are using it within [Bash on Windows leveraging Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
 
+It can also be accessed through the Bash Cloud Shell or https://shell.azure.com/.
+
 1. Let's first login to the CLI with our Azure AD credentials
     * Let's type `az login`
     * The command line should invite us to go to https://microsoft.com/devicelogin
@@ -50,15 +52,9 @@ Let's project the output and keep only three properties:
 `az resource list -g ai --query "[*].{location:location, name:name, type:type}"`
 1. This gives us an uncluttered JSON output
 
-## Fiddler (optional)
-
-An interesting aspect of all the tools we explore in this lab is that they all rely on the Azure REST API.
-
-Using [Fiddler](http://www.telerik.com/fiddler) to monitor HTTP communication we can withness that.
-
-We recommend filtering URLs containing *management.azure.com/subscriptions*.
-
 ## PowerShell Experience
+
+It can also be accessed through the PowerShell Cloud Shell or https://shell.azure.com/.
 
 1. Let's first login to PowerShell with our Azure AD credentials
     * Let's type `Add-AzureRmAccount`

@@ -11,7 +11,8 @@
     "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn=",
     "Cosmos Account Name": "[concat(parameters('Prefix'), '-cosmos-db')]",
     "Storage Account Name": "[concat(parameters('Prefix'), 'storeaccount')]",
-    "Web Plan Name": "[concat(parameters('Prefix'), '-plan')]"
+    "Web Plan Name": "[concat(parameters('Prefix'), '-plan')]",
+    "Function App Name": "[concat(parameters('Prefix'), '-function')]"
   },
   "resources": [
     {
@@ -88,6 +89,26 @@
         "family": "Y",
         "capacity": 0
       }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2016-08-01",
+      "name": "[variables('Function App Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('Web Plan Name'))]"
+      ],
+      "kind": "functionapp",
+      "properties": {
+        "enabled": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('Web Plan Name'))]",
+        "reserved": false,
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "httpsOnly": true
+      },
+      "resources": []
     }
   ]
 }

@@ -2,18 +2,23 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "SQL Server Name": {
+    "SQL Server Prefix": {
+      "type": "string"
+    },
+    "Cosmos DB Account Prefix": {
       "type": "string"
     }
   },
   "variables": {
-    "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn="
+    "SQL Server Name": "[concat(parameters('SQL Server Prefix'), '-sql-server')]",
+    "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn=",
+    "Cosmos Account Name": "[concat(parameters('Cosmos DB Account Prefix'), '-cosmos-db')]"
   },
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2015-05-01-preview",
-      "name": "[parameters('SQL Server Name')]",
+      "name": "[variables('SQL Server Name')]",
       "location": "[resourceGroup().location]",
       "tags": {},
       "properties": {
@@ -28,7 +33,7 @@
           "name": "sql-db",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers', parameters('SQL Server Name'))]"
+            "[resourceId('Microsoft.Sql/servers', variables('SQL Server Name'))]"
           ],
           "tags": {},
           "properties": {
@@ -40,6 +45,18 @@
           "resources": []
         }
       ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2015-04-08",
+      "name": "[variables('Cosmos Account Name')]",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "capabilities": []
+      }
     }
   ]
 }

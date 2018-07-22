@@ -2,7 +2,8 @@
 
 New-AzureRmResourceGroup -Name paas-tour -Location eastus2 -Force
 
-New-AzureRmResourceGroupDeployment -ResourceGroupName paas-tour `
+New-AzureRmResourceGroupDeployment -Name ('Deployment' + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+                                    -ResourceGroupName paas-tour `
                                     -TemplateFile 'paas-tour-arm-template.json' `
                                     -TemplateParameterFile 'paas-tour-arm-template.parameters.json' `
                                     -Force -Verbose `

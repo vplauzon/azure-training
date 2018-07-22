@@ -2,17 +2,16 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "SQL Server Prefix": {
-      "type": "string"
-    },
-    "Cosmos DB Account Prefix": {
+    "Prefix": {
       "type": "string"
     }
   },
   "variables": {
-    "SQL Server Name": "[concat(parameters('SQL Server Prefix'), '-sql-server')]",
+    "SQL Server Name": "[concat(parameters('Prefix'), '-sql-server')]",
     "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn=",
-    "Cosmos Account Name": "[concat(parameters('Cosmos DB Account Prefix'), '-cosmos-db')]"
+    "Cosmos Account Name": "[concat(parameters('Prefix'), '-cosmos-db')]",
+    "Storage Account Name": "[concat(parameters('Prefix'), 'storeaccount')]",
+    "Web Plan Name": "[concat(parameters('Prefix'), '-plan')]"
   },
   "resources": [
     {
@@ -56,6 +55,38 @@
       "properties": {
         "databaseAccountOfferType": "Standard",
         "capabilities": []
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('Storage Account Name')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "tags": {},
+      "properties": {},
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2016-09-01",
+      "name": "[variables('Web Plan Name')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "tags": {},
+      "properties": {
+        "name": "[variables('Web Plan Name')]"
+      },
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
       }
     }
   ]

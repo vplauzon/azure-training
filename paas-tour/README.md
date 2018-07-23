@@ -20,6 +20,50 @@ We suggest to deploy the content in a resource group named *paas-tour* located i
 
 The parameter **Prefix** is used to make some resource name unique.  We recommend using the initial of your name & some number, e.g. *vpl42*.
 
+## Azure SQL DB
+
+Let's first look at the 2 resources related to Azure SQL DB.
+
+![SQL Resources](images/sql-resources.png)
+
+Let's first open the *SQL Server* resource.
+
+As opposed to its on-premise counterpart, the Azure SQL Server is a *logical* server. It acts as a container for databases.  It holds configuration common to the databases, e.g. collation, location & server admin.  It doesn't hold the compute nor does it accrues charges.
+
+1. The server resource holds the firewall rules ; let's look at them
+![Firewalls on the menu](images/firewalls-menu.png)
+1. By default, we can see there are no firewall rules and no virtual network integration
+We will come back to that screen.
+
+Let's open the SQL Database resource.
+
+1. The database is a compute resource:  it has a pricing tier & an endpoint
+![Firewalls on the menu](images/db-overview.png)
+1. Let's look at data encryption
+![Data Encryption on the menu](images/data-encryption-menu.png)
+By default *Transparent Data Encryption* is activated
+![Data Encryption on the menu](images/data-encryption.png)
+It is an opt-out option.  It is set at the database level.
+1. Let's look at geo-replication
+![Data Encryption on the menu](images/geo-replication-menu.png)
+1. We can set replica in any regions ; let's select East-US
+![East US](images/east-us.png)
+1. This leads us to the following form:
+![East US](images/geo-replication-form.png)
+1. It is interesting to look at the form to understand the mechanisms of geo replication
+   * We can control on which *SQL Server* the replica will land
+      * Since a *SQL Server* is bound to a region, a replica must necessarily go to another server
+   * The replica can be of a different pricing tier than the primary.  This can be interesting if the replica is used primarily for DR.  In that case we might want to drop the compute capacity in order to control cost.
+1.  Let's connect to the database.  We could do that with any SQL Server tool, since Azure SQL DB behaves like any SQL Database.  For simplicity let's take the tool available in the portal:
+
+## Azure Cosmos DB
+
+## Azure Functions
+
+## Logic Apps
+
+## Databricks
+
 ## Clean Up (CLI)
 
 Let's clean up the resource group we have created.

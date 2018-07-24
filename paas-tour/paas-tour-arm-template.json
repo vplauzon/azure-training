@@ -11,6 +11,7 @@
     "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn=",
     "Cosmos Account Name": "[concat(parameters('Prefix'), '-cosmos-db')]",
     "Storage Account Name": "[concat(parameters('Prefix'), 'storeaccount')]",
+    "Storage Account ID": "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Account Name'))]",
     "Web Plan Name": "[concat(parameters('Prefix'), '-plan')]",
     "Function App Name": "[concat(parameters('Prefix'), '-function')]"
   },
@@ -96,12 +97,41 @@
       "name": "[variables('Function App Name')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('Web Plan Name'))]"
+        "[resourceId('Microsoft.Web/serverfarms', variables('Web Plan Name'))]",
+        "[variables('Storage Account ID')]"
       ],
       "kind": "functionapp",
       "properties": {
         "enabled": true,
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('Web Plan Name'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('Storage Account Name'), ';AccountKey=', listKeys(variables('Storage Account ID'),'2017-10-01').keys[0].value)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('Storage Account Name'), ';AccountKey=', listKeys(variables('Storage Account ID'),'2017-10-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('Storage Account Name'), ';AccountKey=', listKeys(variables('Storage Account ID'),'2017-10-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('Function App Name'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~1"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "6.5.0"
+            }
+          ]
+        },
         "reserved": false,
         "clientAffinityEnabled": false,
         "clientCertEnabled": false,

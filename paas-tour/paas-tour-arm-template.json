@@ -10,10 +10,12 @@
     "SQL Server Name": "[concat(parameters('Prefix'), '-sql-server')]",
     "SQL Password": "RC_8$zEAVYh&yKXR%KYBj4xnjX^yn=",
     "Cosmos Account Name": "[concat(parameters('Prefix'), '-cosmos-db')]",
+    "Cosmos Connection Name": "[concat(parameters('Prefix'), '-connection-cosmos-db')]",
     "Storage Account Name": "[concat(parameters('Prefix'), 'storeaccount')]",
     "Storage Account ID": "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Account Name'))]",
     "Web Plan Name": "[concat(parameters('Prefix'), '-plan')]",
-    "Function App Name": "[concat(parameters('Prefix'), '-function')]"
+    "Function App Name": "[concat(parameters('Prefix'), '-function')]",
+    "Logic App Name": "[concat(parameters('Prefix'), '-logic-app')]"
   },
   "resources": [
     {

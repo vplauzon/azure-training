@@ -58,6 +58,6 @@ We've seen that RBAC permissions was about roles.  Let's look at role definition
 
 ## Custom roles
 
-It is possible to create custom roles by aggregating actions.  We will not do that here.
+It is possible to create custom roles by aggregating actions.
 
-[Online Documentation](https://docs.microsoft.com/en-us/azure/role-based-access-control/custom-roles) cover that topic.
+[Online Documentation](https://docs.microsoft.com/en-us/azure/role-based-access-control/custom-roles) covers that topic.

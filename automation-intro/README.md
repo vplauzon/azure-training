@@ -69,8 +69,10 @@ Let's clean up the resource groups we have created.  Technically, there are no c
 The following commands bypass the "Are you sure you want to perform this operation?".  Be careful you do not do this with resource groups containing valuable resources.
 
 1.  Type
-`az group delete --name sto-arm --no-wait -y`
-`az group delete --name sto-cli --no-wait -y`
-`az group delete --name sto-portal --no-wait -y`
+```
+az group delete --name sto-arm --no-wait -y
+az group delete --name sto-cli --no-wait -y
+az group delete --name sto-portal --no-wait -y
+```
 
 The commands do not prompt and return before the resource groups are deleted.  It deletes the resources under the resource group (i.e. storage accounts) before deleting the resource group.  The deletion should take about a minute.

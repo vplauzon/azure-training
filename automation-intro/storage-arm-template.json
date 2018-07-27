@@ -13,12 +13,12 @@
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2017-10-01",
       "name": "[parameters('Storage Account Name')]",
+      "location": "[resourceGroup().location]",
       "sku": {
         "name": "Standard_LRS",
         "tier": "Standard"
       },
       "kind": "StorageV2",
-      "location": "[resourceGroup().location]",
       "tags": {},
       "properties": {},
       "resources": [],

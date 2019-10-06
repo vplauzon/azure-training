@@ -128,6 +128,8 @@ kubectl get pods -n single
 
 The last command will display the pod in the newly created namespace.
 
+Although this pod is a web site, we can't access it.  The container is running, but it is unavailable from the outside.
+
 Let's look at more details about that pod:
 
 ```bash
@@ -145,3 +147,44 @@ We see the pod had no persistence.  For that reason, we never create pod this wa
 
 ## Deployment
 
+Now let's look at a [deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/).  Deployments manage replica sets.
+
+We are going to use [simple-deployment.yaml](simple-deployment.yaml):
+
+```bash
+kubectl create namespace simple-deployment
+kubectl apply -f simple-deployment.yaml -n simple-deployment
+kubectl get deployment -n simple-deployment
+kubectl get rs -n simple-deployment
+kubectl get pods -n simple-deployment
+```
+
+We can see the created *deployment*, the *replica set* it manages and the *pods* it manages.  Luckily we can see the pods in their creation stage.
+
+Let's delete one of the pod (replace *POD-NAME* by one of the uniquely named pods):
+
+```bash
+kubectl delete pod <POD-NAME> -n simple-deployment
+kubectl get pods -n simple-deployment
+```
+
+We can see the pod was immediately replaced by another pod.  This was done by the *replica set* which monitors the API Server and always converges to the desired configuration.
+
+Let's delete the *replica set* (replace *REPLICA-SET-NAME* by the name of the replica set):
+
+```bash
+kubectl delete rs simple-deployment-567c7c84cf -n simple-deployment
+kubectl get rs -n simple-deployment
+kubectl get pods -n simple-deployment
+```
+
+We see the *replica set* is recreated by the deployment.  The underlying pods from the original replica sets are getting terminated while 5 new ones are getting scheduled.
+
+The only way to get rid of the pods is to delete the deployment:
+
+```bash
+kubectl delete deploy simple-deployment -n simple-deployment
+kubectl get deployment -n simple-deployment
+kubectl get rs -n simple-deployment
+kubectl get pods -n simple-deployment
+```

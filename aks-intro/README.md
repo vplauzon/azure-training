@@ -4,6 +4,8 @@ This is an introduction demo to AKS.  It goes through the main concepts of of Ku
 
 In your journey with AKS, you might want to consider looking at [my AKS repo](https://github.com/vplauzon/aks).  It's a collection of different deep dive into AKS topics.
 
+For this demo we are going to use the Azure CLI.  This comes in the Azure Cloud Shell and can otherwise be installed in a shell on either Windows / Linux & Mac.
+
 ## Demo Map:  Kubernetes' Anatomy
 
 The demo basically follow the different concepts in this map:
@@ -34,8 +36,89 @@ In order to play with Docker itself (something we won't do in this demo), the ea
 
 ## Deploying AKS
 
+AKS is available in many regions.  We are going to deploy in East US 2.
 
+First we are going to determine what is the latest version of Kubernetes available in that region:
+
+```bash
+region=eastus2
+latestVersion=$(az aks get-versions --location $region --query "orchestrators[-1].orchestratorVersion" -o tsv)
+echo "Latest Version is $latestVersion"
+```
+
+Then we are going to create a resource group where we are going to deploy AKS:
+
+```bash
+rg=aks-demo
+az group create --name $rg --location $region
+```
+
+Finally, we are going to deploy AKS in that resource group:
+
+```bash
+cluster=demo-cluster
+az aks create --resource-group $rg --name $cluster -k $latestVersion -s Standard_B2ms --node-count 3 --enable-addons monitoring --generate-ssh-keys --enable-vmss --load-balancer-sku standard
+```
+
+The last command will take several minutes to run.
+
+This creates a vanila cluster with the following characteristics:
+
+* The worker nodes are going to be *Standard B2 ms* ; those are the cheapest that can run AKS at the time of this writing (October 2019)
+* There are 3 worker nodes
+* It runs the latest version of Kubernetes available in AKS in the deployment region
+* It is enabling the *monitoring* add-on
+* It runs with VM Scale Sets (VMSS)
+* It runs with a *standard load balancer*
+
+Once the cluster is deployed, it is interesting to look at the resource group where it was created.  There should be one resources of type *Kubernetes service*.
+
+Another resource group was created with all the underlying resources (e.g. VMs).  That resource group starts with *MC_* (for *managed cluster*).
+
+## Looking inside the cluster
+
+Before we start pushing workloads on our cluster, let's look at it.
+
+We'll need the *kubectl* CLI.  If it isn't already installed, it can easily be installed with:
+
+```bash
+az aks install-cli
+```
+
+We then need to connect the CLI to our cluster:
+
+```bash
+az aks install-cli
+```
+
+Let's look at the nodes:
+
+```bash
+kubectl get nodes -o wide
+```
+
+There should be three nodes.  Their name correspond to the VM names in the VMSS.
+
+Let's look at the namespaces:
+
+```bash
+kubectl get namespaces
+```
+
+Let's look at the pods already running on the cluster:
+
+```bash
+kubectl get pods -n kube-system
+kubectl get pods -n kube-node-lease
+kubectl get pods -n kube-public
+kubectl get pods -n default
+```
+
+We should see existing pod in the *kube-system* namespace only.
 
 ## Single pod
 
-Let's deploy our first pod.  We'll use 
+Let's deploy our first pod.  We'll use the spec file [single-pod.yaml](single-pod.yaml):
+
+```bash
+```

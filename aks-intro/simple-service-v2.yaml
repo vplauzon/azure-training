@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app:  simple-pod
+  template:
+    metadata:
+      labels:
+        app: simple-pod
+    spec:
+      containers:
+      - name: pod1
+        image: vplauzon/get-started:part2-no-redis
+        env:
+        - name: NAME
+          value: Hello World Better and Improved (v2)
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: simple-pod
+  

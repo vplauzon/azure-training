@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app:  simple-pod
+  template:
+    metadata:
+      labels:
+        app: simple-pod
+    spec:
+      containers:
+      - name: pod1
+        image: vplauzon/get-started:part2-no-redis
+        ports:
+        - containerPort: 80

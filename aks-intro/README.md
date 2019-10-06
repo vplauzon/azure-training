@@ -14,6 +14,8 @@ The demo basically follow the different concepts in this map:
 
 By no mean is this Kubernetes' anatomy complete.  There are a lot of concepts we won't cover.  This map focuses on compute concepts, i.e. how to deploy containers and access them.
 
+In this demo, we won't tackle the two top concepts, i.e. Ingress rule & Ingress Controller.
+
 ## Container images
 
 We start our journey with container images.
@@ -161,7 +163,7 @@ kubectl get pods -n simple-deployment
 
 We can see the created *deployment*, the *replica set* it manages and the *pods* it manages.  Luckily we can see the pods in their creation stage.
 
-Let's delete one of the pod (replace *POD-NAME* by one of the uniquely named pods):
+Let's delete one of the pod (replace *<POD-NAME>* by one of the uniquely named pods):
 
 ```bash
 kubectl delete pod <POD-NAME> -n simple-deployment
@@ -170,10 +172,10 @@ kubectl get pods -n simple-deployment
 
 We can see the pod was immediately replaced by another pod.  This was done by the *replica set* which monitors the API Server and always converges to the desired configuration.
 
-Let's delete the *replica set* (replace *REPLICA-SET-NAME* by the name of the replica set):
+Let's delete the *replica set* (replace *<REPLICA-SET-NAME>* by the name of the replica set):
 
 ```bash
-kubectl delete rs simple-deployment-567c7c84cf -n simple-deployment
+kubectl delete rs <REPLICA-SET-NAME> -n simple-deployment
 kubectl get rs -n simple-deployment
 kubectl get pods -n simple-deployment
 ```
@@ -188,3 +190,40 @@ kubectl get deployment -n simple-deployment
 kubectl get rs -n simple-deployment
 kubectl get pods -n simple-deployment
 ```
+
+## Service
+
+Let's deploy a service exposing our pods.
+
+We are going to use [simple-service.yaml](simple-service.yaml):
+
+```bash
+kubectl create namespace simple-service
+kubectl apply -f simple-service.yaml -n simple-service
+kubectl get svc -n simple-service
+kubectl get pods -n simple-service
+```
+
+We can see the service has two IPs:  internal and external.  The external IP is *pending*.
+
+This is where an Azure integration occur.  If we look back at our *MC_...* resource group, we'll see a new *Public IP* starting with *kubernetes-*.
+
+Eventually the external IP will be provisioned.  If we browse to it, we should see the result of the container's web site.  This should display an *hello world* and display the host name.  The host name is actually the pod name.
+
+Now if we refresh the browser, we should cycle through the 2 pods of the deployment.
+
+Let's redeploy our service with different configuration in [simple-service-v2.yaml](simple-service-v2.yaml).  As a `diff simple-service.yaml simple-service-v2.yaml` would reveal, the difference between the two spec files is the number of pod (v2 has 3) and the v2 overrides an environment variable to change the greeting.
+
+```bash
+kubectl apply -f simple-service-v2.yaml -n simple-service
+kubectl get pods -n simple-service
+```
+
+We can see the API Server detects there were no change to the service and doesn't change it. The pods are terminated and replaced by new ones.
+
+Depending on the timing of the command, we should see an actual *roll out upgrade*, i.e. pods are sequentially created and deleted as opposed to deleting the old ones and then creating new ones.  This way, the service is never down.
+
+If we refresh the browser, we should see the new greating and we can cycle through the 3 new pods.
+
+## Monitoring
+

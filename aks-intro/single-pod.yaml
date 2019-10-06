@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: single-pod
+spec:
+  containers:
+  - name: pod1
+    image: vplauzon/get-started:part2-no-redis
+    ports:
+    - containerPort: 80

@@ -118,7 +118,30 @@ We should see existing pod in the *kube-system* namespace only.
 
 ## Single pod
 
-Let's deploy our first pod.  We'll use the spec file [single-pod.yaml](single-pod.yaml):
+Let's deploy our first pod.  We'll use the spec file [single-pod.yaml](single-pod.yaml).  We'll create a namespace and deploy the pod into it:
 
 ```bash
+kubectl create namespace single
+kubectl apply -f single-pod.yaml -n single
+kubectl get pods -n single
 ```
+
+The last command will display the pod in the newly created namespace.
+
+Let's look at more details about that pod:
+
+```bash
+kubectl describe pod single-pod -n single
+```
+
+Now if we delete the pod and look again:
+
+```bash
+kubectl delete pod single-pod -n single
+kubectl get pods -n single
+```
+
+We see the pod had no persistence.  For that reason, we never create pod this way.
+
+## Deployment
+

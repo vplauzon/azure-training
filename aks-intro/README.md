@@ -1,6 +1,8 @@
 # Introduction to AKS
 
-This is an introduction demo to AKS.  It goes through the main concepts of of Kubernetes and how AKS enables integration with Azure resources.
+This is an introduction demo to [Azure Kubernetes Service](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) (AKS).  It goes through the main concepts of of Kubernetes and how AKS enables integration with Azure resources.
+
+The objective here is just to demystify what AKS is and what usage pattern could look like.  Hopefully this could be a springboard to go and learn more for you.
 
 In your journey with AKS, you might want to consider looking at [my AKS repo](https://github.com/vplauzon/aks).  It's a collection of different deep dive into AKS topics.
 
@@ -282,3 +284,16 @@ This should return:
 curl: (52) Empty reply from server
 ```
 
+This is because the spec file enforces a limit of 128 Mb of RAM (including all the overheads, not only the request RAM usage).
+
+In the Insights pane, we'll see the container actually got recycled.
+
+Those are graphical tools.  We can have access to the underlying raw logs if we go to the *Logs* pane.  This allows us to query the logs using Kusto Query Language (KQL).
+
+# Summary
+
+We did a quick tour around AKS, looking at how we can deploy containers, look at the configuration and monitor them.
+
+This is the tip of the iceberg.  Kubernetes is a very rich ecosystem and we can't cover it in an hour.
+
+Next step could be to look at the [Azure Online Documentation](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) and dive into scenarios that could be useful for you and / or your organiation.

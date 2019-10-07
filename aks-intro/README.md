@@ -227,3 +227,58 @@ If we refresh the browser, we should see the new greating and we can cycle throu
 
 ## Monitoring
 
+Let's deploy a service we can easily monitor.  We are going to follow [this article](https://vincentlauzon.com/2019/04/02/requests-vs-limits-in-kubernetes/).
+
+We are going to use [monitoring.yaml](monitoring.yaml):
+
+```bash
+kubectl create namespace monitoring
+kubectl apply -f monitoring.yaml -n monitoring
+kubectl get svc -n monitoring
+kubectl get pods -n monitoring
+```
+
+There are 6 pods with container image [vplauzon/cpu-ram-request-api](https://cloud.docker.com/repository/docker/vplauzon/cpu-ram-request-api).  That is an ASP.NET core application designed to use CPU or RAM on API requests.
+
+First, let's grab the external IP:
+
+```bash
+ip=$(kubectl get svc -n monitoring -o=jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
+echo "IP:  $ip"
+```
+
+(If this doesn't yield an IP, wait 30-60 seconds for the external IP to be provisionned)
+
+Let's try the API:
+
+```bash
+curl "http://$ip/"
+curl "http://$ip/?duration=90"
+curl "http://$ip/?duration=90&core=2"
+curl "http://$ip/?duration=15&ram=20"
+curl "http://$ip/?duration=15&ram=40"
+curl "http://$ip/?duration=15&ram=60"
+```
+
+By default (first command), the request lasts for 1 second, using 1 core & 10 Mb of RAM.  We then force the request to take 90 seconds and finally to use two cores.  The last three commands then increase the RAM used by each request.
+
+Those take a little time to run and will take a few minutes to get reflected in the logs as logs aren't collected in real time.
+
+Let's go to Container Insights.  In the Azure Portal, we need to go in the AKS resource (Kubernetes service), under the monitoring heading, we need to select the *Insights* pane.  From there we can select the *Controllers* tab and type *cpu* in the search text box.
+
+![Container Insights](images/container-insights.png)
+
+This should display the *cpu-ram-api-...* replica set.  In time, we should be able to see the CPU spikes on the pods processing the requests.
+
+Let's break the limits of a container by using more than the RAM threshold:
+
+```bash
+curl "http://$ip/?duration=15&ram=100"
+```
+
+This should return:
+
+```bash
+curl: (52) Empty reply from server
+```
+

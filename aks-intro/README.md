@@ -1,6 +1,6 @@
 # Introduction to AKS
 
-This is an introduction demo to [Azure Kubernetes Service](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) (AKS).  It goes through the main concepts of of Kubernetes and how AKS enables integration with Azure resources.
+This is an introduction demo to [Azure Kubernetes Service](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) (AKS).  It goes through the main concepts of Kubernetes and how AKS enables integration with Azure resources.
 
 The objective here is just to demystify what AKS is and what usage pattern could look like.  Hopefully this could be a springboard to go and learn more for you.
 
@@ -10,7 +10,7 @@ For this demo we are going to use the Azure CLI.  This comes in the Azure Cloud 
 
 ## Demo Map:  Kubernetes' Anatomy
 
-The demo basically follow the different concepts in this map:
+The demo basically follows the different concepts in this map:
 
 ![Kubernetes' Anatomy](images/kubernetes-anatomy.png)
 
@@ -42,7 +42,7 @@ In order to play with Docker itself (something we won't do in this demo), the ea
 
 AKS is available in many regions.  We are going to deploy in East US 2.
 
-First we are going to determine what is the latest version of Kubernetes available in that region:
+First, we are going to determine what is the latest version of Kubernetes available in that region:
 
 ```bash
 region=eastus2
@@ -66,7 +66,7 @@ az aks create --resource-group $rg --name $cluster -k $latestVersion -s Standard
 
 The last command will take several minutes to run.
 
-This creates a vanila cluster with the following characteristics:
+This creates a vanilla cluster with the following characteristics:
 
 * The worker nodes are going to be *Standard B2 ms* ; those are the cheapest that can run AKS at the time of this writing (October 2019)
 * There are 3 worker nodes
@@ -101,7 +101,7 @@ Let's look at the nodes:
 kubectl get nodes -o wide
 ```
 
-There should be three nodes.  Their name correspond to the VM names in the VMSS.
+There should be three nodes.  Their name corresponds to the VM names in the VMSS.
 
 Let's look at the namespaces:
 
@@ -163,7 +163,7 @@ kubectl get rs -n simple-deployment
 kubectl get pods -n simple-deployment
 ```
 
-We can see the created *deployment*, the *replica set* it manages and the *pods* it manages.  Luckily we can see the pods in their creation stage.
+We can see the created *deployment*, the *replica set* it manages and the *pods* it manages.  Luckily, we can see the pods in their creation stage.
 
 Let's delete one of the pod (replace *<POD-NAME>* by one of the uniquely named pods):
 
@@ -225,7 +225,7 @@ We can see the API Server detects there were no change to the service and doesn'
 
 Depending on the timing of the command, we should see an actual *roll out upgrade*, i.e. pods are sequentially created and deleted as opposed to deleting the old ones and then creating new ones.  This way, the service is never down.
 
-If we refresh the browser, we should see the new greating and we can cycle through the 3 new pods.
+If we refresh the browser, we should see the new greeting and we can cycle through the 3 new pods.
 
 ## Monitoring
 
@@ -249,7 +249,7 @@ ip=$(kubectl get svc -n monitoring -o=jsonpath='{.items[0].status.loadBalancer.i
 echo "IP:  $ip"
 ```
 
-(If this doesn't yield an IP, wait 30-60 seconds for the external IP to be provisionned)
+(If this doesn't yield an IP, wait 30-60 seconds for the external IP to be provisioned)
 
 Let's try the API:
 
@@ -286,7 +286,7 @@ curl: (52) Empty reply from server
 
 This is because the spec file enforces a limit of 128 Mb of RAM (including all the overheads, not only the request RAM usage).
 
-In the Insights pane, we'll see the container actually got recycled.
+In the Insights pane, we'll see the container got recycled.
 
 Those are graphical tools.  We can have access to the underlying raw logs if we go to the *Logs* pane.  This allows us to query the logs using Kusto Query Language (KQL).
 
@@ -296,4 +296,4 @@ We did a quick tour around AKS, looking at how we can deploy containers, look at
 
 This is the tip of the iceberg.  Kubernetes is a very rich ecosystem and we can't cover it in an hour.
 
-Next step could be to look at the [Azure Online Documentation](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) and dive into scenarios that could be useful for you and / or your organiation.
+Next step could be to look at the [Azure Online Documentation](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) and dive into scenarios that could be useful for you and / or your organization.

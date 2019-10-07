@@ -92,7 +92,7 @@ az aks install-cli
 We then need to connect the CLI to our cluster:
 
 ```bash
-az aks install-cli
+az aks get-credentials -g $rg -n $cluster
 ```
 
 Let's look at the nodes:

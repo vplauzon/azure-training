@@ -9,7 +9,9 @@
         "Container 1": "container1",
         "Container 2": "container2",
         "Container 3": "container3",
-        "Container 4": "container4"
+        "Container 4": "container4",
+        "List Container App": "[concat('list-containers-', variables('Unique ID'))]",
+        "Storage Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
     },
     "resources": [
         {
@@ -71,8 +73,316 @@
                     }
                 }
             ]
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('List Container App')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "container": {
+                                            "type": "string"
+                                        },
+                                        "directory": {
+                                            "type": "string"
+                                        },
+                                        "doListDirectories": {
+                                            "type": "boolean"
+                                        },
+                                        "storageAccount": {
+                                            "type": "string"
+                                        },
+                                        "suffix": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "storageAccount",
+                                        "container"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            "operationOptions": "EnableSchemaValidation"
+                        }
+                    },
+                    "actions": {
+                        "base-url": {
+                            "runAfter": {
+                                "init-continuation": [
+                                    "Succeeded"
+                                ],
+                                "init-error": [
+                                    "Succeeded"
+                                ],
+                                "init-paths": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "https://@{triggerBody()['storageAccount']}.dfs.core.windows.net/@{triggerBody()['container']}?resource=filesystem&recursive=true"
+                        },
+                        "blobs": {
+                            "runAfter": {
+                                "until-continuation": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('paths')",
+                                "where": "@not(equals(item()?['isDirectory'], 'true'))"
+                            }
+                        },
+                        "if-list-directories": {
+                            "actions": {
+                                "directories": {
+                                    "runAfter": {},
+                                    "type": "Query",
+                                    "inputs": {
+                                        "from": "@variables('paths')",
+                                        "where": "@equals(item()?['isDirectory'], 'true')"
+                                    }
+                                },
+                                "response-success-with-directories": {
+                                    "runAfter": {
+                                        "directories": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Response",
+                                    "kind": "Http",
+                                    "inputs": {
+                                        "body": {
+                                            "blobs": "@body('blobs')",
+                                            "directories": "@body('directories')"
+                                        },
+                                        "statusCode": 200
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "blobs": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "else": {
+                                "actions": {
+                                    "response-success-without-directories": {
+                                        "runAfter": {},
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "body": {
+                                                "blobs": "@body('blobs')"
+                                            },
+                                            "statusCode": 200
+                                        }
+                                    }
+                                }
+                            },
+                            "expression": "@triggerBody()?['doListDirectories']",
+                            "type": "If"
+                        },
+                        "init-continuation": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "continuation",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "init-error": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "error",
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        },
+                        "init-paths": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "paths",
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        },
+                        "response-failure": {
+                            "runAfter": {
+                                "until-continuation": [
+                                    "Failed",
+                                    "TimedOut"
+                                ]
+                            },
+                            "type": "Response",
+                            "kind": "Http",
+                            "inputs": {
+                                "body": "@variables('error')",
+                                "statusCode": 500
+                            }
+                        },
+                        "until-continuation": {
+                            "actions": {
+                                "data-lake-list": {
+                                    "runAfter": {
+                                        "with-continuation": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "authentication": {
+                                            "audience": "https://storage.azure.com",
+                                            "type": "ManagedServiceIdentity"
+                                        },
+                                        "headers": {
+                                            "x-ms-version": "2019-07-07"
+                                        },
+                                        "method": "GET",
+                                        "uri": "@{outputs('with-continuation')}"
+                                    }
+                                },
+                                "set-continuation": {
+                                    "runAfter": {
+                                        "data-lake-list": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "continuation",
+                                        "value": "@{outputs('data-lake-list')['headers']?['x-ms-continuation']}"
+                                    }
+                                },
+                                "set-http-error": {
+                                    "inputs": {
+                                        "name": "error",
+                                        "value": {
+                                            "innerError": {
+                                                "body": "@body('data-lake-list')",
+                                                "code": "@outputs('data-lake-list')['statusCode']",
+                                                "headers": "@outputs('data-lake-list')['headers']"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "data-lake-list": [
+                                            "Failed",
+                                            "TimedOut"
+                                        ]
+
+                                    },
+                                    "type": "SetVariable"
+                                },
+                                "set-paths": {
+                                    "runAfter": {
+                                        "union-paths": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "paths",
+                                        "value": "@outputs('union-paths')"
+                                    }
+                                },
+                                "filter-suffix": {
+                                    "inputs": {
+                                        "from": "@body('data-lake-list').paths",
+                                        "where": "@or(equals(item()?['isDirectory'], 'true'), endswith(item().name, coalesce(triggerBody()?['suffix'], '')))"
+                                    },
+                                    "runAfter": {
+                                        "set-continuation": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Query"
+                                },
+                                "union-paths": {
+                                    "inputs": "@union(variables('paths'), body('filter-suffix'))",
+                                    "runAfter": {
+                                        "filter-suffix": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Compose"
+                                },
+                                "with-continuation": {
+                                    "runAfter": {},
+                                    "type": "Compose",
+                                    "inputs": "@concat(outputs('with-directory'), if(equals('', variables('continuation')), '', concat('&continuation=', encodeUriComponent(variables('continuation')))))"
+                                }
+                            },
+                            "runAfter": {
+                                "with-directory": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": "@equals(variables('continuation'), '')",
+                            "limit": {
+                                "count": 60,
+                                "timeout": "PT1H"
+                            },
+                            "type": "Until"
+                        },
+                        "with-directory": {
+                            "runAfter": {
+                                "base-url": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "@if(equals('', coalesce(triggerBody()?['directory'], '')), outputs('base-url'), concat(outputs('base-url'), '&directory=', encodeUriComponent(triggerBody()?['directory'])))"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {}
+            }
+        },
+        {
+            "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name')), variables('Storage Reader'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.Logic/workflows', variables('List Container App'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+            ],
+            "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('Storage Name'))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('Storage Reader'))]",
+                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', variables('List Container App')), '2017-07-01', 'Full').identity.principalId]"
+            }
         }
     ],
-    "outputs": {
-    }
+    "outputs": {}
 }

@@ -1,0 +1,171 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+    },
+    "variables": {
+        "Unique ID": "[uniqueString(concat(resourceGroup().id, 'msi'))]",
+        "Storage Name": "[concat('storage', variables('Unique ID'))]",
+        "Container 1": "container1",
+        "Container 2": "container2",
+        "Container 3": "container3",
+        "Container 4": "container4",
+        "List Container App": "[concat('list-containers-', variables('Unique ID'))]",
+        "Storage Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('Storage Name')]",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "isHnsEnabled": true
+            },
+            "resources": [
+                {
+                    "apiVersion": "2019-04-01",
+                    "type": "blobServices/containers",
+                    "name": "[concat('default/', variables('Container 1'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+                    ],
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                },
+                {
+                    "apiVersion": "2019-04-01",
+                    "type": "blobServices/containers",
+                    "name": "[concat('default/', variables('Container 2'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+                    ],
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                },
+                {
+                    "apiVersion": "2019-04-01",
+                    "type": "blobServices/containers",
+                    "name": "[concat('default/', variables('Container 3'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+                    ],
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                },
+                {
+                    "apiVersion": "2019-04-01",
+                    "type": "blobServices/containers",
+                    "name": "[concat('default/', variables('Container 4'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+                    ],
+                    "properties": {
+                        "publicAccess": "None"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('List Container App')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "account": {
+                            "defaultValue": "[variables('Storage Name')]",
+                            "type": "String"
+                        }
+                    },
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "container-list": {
+                            "runAfter": {
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://storage.azure.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "headers": {
+                                    "x-ms-version": "2019-07-07"
+                                },
+                                "method": "GET",
+                                "uri": "https://@{parameters('account')}.dfs.core.windows.net/?resource=account"
+                            }
+                        },
+                        "get-names-only": {
+                            "inputs": {
+                                "from": "@body('container-list').filesystems",
+                                "select": "@item().name"
+                            },
+                            "runAfter": {
+                                "container-list": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Select"
+                        },
+                        "success-response": {
+                            "inputs": {
+                                "body": "@body('get-names-only')",
+                                "statusCode": 200
+                            },
+                            "kind": "http",
+                            "runAfter": {
+                                "get-names-only": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Response"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {}
+            }
+        },
+        {
+            "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name')), variables('Storage Reader'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.Logic/workflows', variables('List Container App'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
+            ],
+            "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('Storage Name'))]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('Storage Reader'))]",
+                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', variables('List Container App')), '2017-07-01', 'Full').identity.principalId]"
+            }
+        }
+    ],
+    "outputs": {}
+}

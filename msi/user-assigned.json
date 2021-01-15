@@ -11,6 +11,8 @@
         "Container 2": "container2",
         "Container 3": "container3",
         "Container 4": "container4",
+        "App Plan": "app-plan",
+        "Function App": "[concat('function-app-', variables('Unique ID'))]",
         "List Container App": "[concat('list-containers-', variables('Unique ID'))]",
         "Storage Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
     },
@@ -82,6 +84,70 @@
             ]
         },
         {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2019-08-01",
+            "name": "[variables('App Plan')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+            },
+            "properties": {
+                "name": "[variables('App Plan')]",
+                "computeMode": "Dynamic"
+            },
+            "kind": "linux"
+        },
+        {
+            "apiVersion": "2019-08-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[variables('Function App')]",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('App Plan'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]": {}
+                }
+            },
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('App Plan'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsSecretStorageType",
+                            "value": "Files"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('Storage Name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name')),'2019-04-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('Storage Name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name')),'2019-04-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(variables('Function App'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+            ]
+        },
+        {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
             "name": "[variables('List Container App')]",
@@ -123,7 +189,7 @@
                             "inputs": {
                                 "authentication": {
                                     "audience": "https://storage.azure.com",
-                                    "identity":"[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]",
+                                    "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]",
                                     "type": "ManagedServiceIdentity"
                                 },
                                 "headers": {

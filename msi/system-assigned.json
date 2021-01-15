@@ -88,271 +88,38 @@
                 "definition": {
                     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
                     "contentVersion": "1.0.0.0",
-                    "parameters": {},
+                    "parameters": {
+                        "account": {
+                            "defaultValue": "[variables('Storage Name')]",
+                            "type": "String"
+                        }
+                    },
                     "triggers": {
                         "manual": {
                             "type": "Request",
                             "kind": "Http",
                             "inputs": {
                                 "schema": {
-                                    "properties": {
-                                        "container": {
-                                            "type": "string"
-                                        },
-                                        "directory": {
-                                            "type": "string"
-                                        },
-                                        "doListDirectories": {
-                                            "type": "boolean"
-                                        },
-                                        "storageAccount": {
-                                            "type": "string"
-                                        },
-                                        "suffix": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "storageAccount",
-                                        "container"
-                                    ],
-                                    "type": "object"
                                 }
-                            },
-                            "operationOptions": "EnableSchemaValidation"
+                            }
                         }
                     },
                     "actions": {
-                        "base-url": {
+                        "container-list": {
                             "runAfter": {
-                                "init-continuation": [
-                                    "Succeeded"
-                                ],
-                                "init-error": [
-                                    "Succeeded"
-                                ],
-                                "init-paths": [
-                                    "Succeeded"
-                                ]
                             },
-                            "type": "Compose",
-                            "inputs": "https://@{triggerBody()['storageAccount']}.dfs.core.windows.net/@{triggerBody()['container']}?resource=filesystem&recursive=true"
-                        },
-                        "blobs": {
-                            "runAfter": {
-                                "until-continuation": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "Query",
+                            "type": "Http",
                             "inputs": {
-                                "from": "@variables('paths')",
-                                "where": "@not(equals(item()?['isDirectory'], 'true'))"
+                                "authentication": {
+                                    "audience": "https://storage.azure.com",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "headers": {
+                                    "x-ms-version": "2019-07-07"
+                                },
+                                "method": "GET",
+                                "uri": "https://@{parameters('account')}.dfs.core.windows.net/?resource=account"
                             }
-                        },
-                        "if-list-directories": {
-                            "actions": {
-                                "directories": {
-                                    "runAfter": {},
-                                    "type": "Query",
-                                    "inputs": {
-                                        "from": "@variables('paths')",
-                                        "where": "@equals(item()?['isDirectory'], 'true')"
-                                    }
-                                },
-                                "response-success-with-directories": {
-                                    "runAfter": {
-                                        "directories": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Response",
-                                    "kind": "Http",
-                                    "inputs": {
-                                        "body": {
-                                            "blobs": "@body('blobs')",
-                                            "directories": "@body('directories')"
-                                        },
-                                        "statusCode": 200
-                                    }
-                                }
-                            },
-                            "runAfter": {
-                                "blobs": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "else": {
-                                "actions": {
-                                    "response-success-without-directories": {
-                                        "runAfter": {},
-                                        "type": "Response",
-                                        "kind": "Http",
-                                        "inputs": {
-                                            "body": {
-                                                "blobs": "@body('blobs')"
-                                            },
-                                            "statusCode": 200
-                                        }
-                                    }
-                                }
-                            },
-                            "expression": "@triggerBody()?['doListDirectories']",
-                            "type": "If"
-                        },
-                        "init-continuation": {
-                            "runAfter": {},
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "continuation",
-                                        "type": "string"
-                                    }
-                                ]
-                            }
-                        },
-                        "init-error": {
-                            "runAfter": {},
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "error",
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "init-paths": {
-                            "runAfter": {},
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "paths",
-                                        "type": "array"
-                                    }
-                                ]
-                            }
-                        },
-                        "response-failure": {
-                            "runAfter": {
-                                "until-continuation": [
-                                    "Failed",
-                                    "TimedOut"
-                                ]
-                            },
-                            "type": "Response",
-                            "kind": "Http",
-                            "inputs": {
-                                "body": "@variables('error')",
-                                "statusCode": 500
-                            }
-                        },
-                        "until-continuation": {
-                            "actions": {
-                                "data-lake-list": {
-                                    "runAfter": {
-                                        "with-continuation": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Http",
-                                    "inputs": {
-                                        "authentication": {
-                                            "audience": "https://storage.azure.com",
-                                            "type": "ManagedServiceIdentity"
-                                        },
-                                        "headers": {
-                                            "x-ms-version": "2019-07-07"
-                                        },
-                                        "method": "GET",
-                                        "uri": "@{outputs('with-continuation')}"
-                                    }
-                                },
-                                "set-continuation": {
-                                    "runAfter": {
-                                        "data-lake-list": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "SetVariable",
-                                    "inputs": {
-                                        "name": "continuation",
-                                        "value": "@{outputs('data-lake-list')['headers']?['x-ms-continuation']}"
-                                    }
-                                },
-                                "set-http-error": {
-                                    "inputs": {
-                                        "name": "error",
-                                        "value": {
-                                            "innerError": {
-                                                "body": "@body('data-lake-list')",
-                                                "code": "@outputs('data-lake-list')['statusCode']",
-                                                "headers": "@outputs('data-lake-list')['headers']"
-                                            }
-                                        }
-                                    },
-                                    "runAfter": {
-                                        "data-lake-list": [
-                                            "Failed",
-                                            "TimedOut"
-                                        ]
-
-                                    },
-                                    "type": "SetVariable"
-                                },
-                                "set-paths": {
-                                    "runAfter": {
-                                        "union-paths": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "SetVariable",
-                                    "inputs": {
-                                        "name": "paths",
-                                        "value": "@outputs('union-paths')"
-                                    }
-                                },
-                                "filter-suffix": {
-                                    "inputs": {
-                                        "from": "@body('data-lake-list').paths",
-                                        "where": "@or(equals(item()?['isDirectory'], 'true'), endswith(item().name, coalesce(triggerBody()?['suffix'], '')))"
-                                    },
-                                    "runAfter": {
-                                        "set-continuation": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Query"
-                                },
-                                "union-paths": {
-                                    "inputs": "@union(variables('paths'), body('filter-suffix'))",
-                                    "runAfter": {
-                                        "filter-suffix": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Compose"
-                                },
-                                "with-continuation": {
-                                    "runAfter": {},
-                                    "type": "Compose",
-                                    "inputs": "@concat(outputs('base-url'), if(equals('', variables('continuation')), '', concat('&continuation=', encodeUriComponent(variables('continuation')))))"
-                                }
-                            },
-                            "runAfter": {
-                                "base-url": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "expression": "@equals(variables('continuation'), '')",
-                            "limit": {
-                                "count": 60,
-                                "timeout": "PT1H"
-                            },
-                            "type": "Until"
                         }
                     },
                     "outputs": {}

@@ -140,11 +140,52 @@
                         {
                             "name": "WEBSITE_CONTENTSHARE",
                             "value": "[toLower(variables('Function App'))]"
+                        },
+                        {
+                            "name": "ACCOUNT_NAME",
+                            "value": "[variables('Storage Name')]"
+                        },
+                        {
+                            "name": "PRINCIPAL_ID",
+                            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity')), '2018-11-30').principalId]"
                         }
                     ]
                 }
             },
             "resources": [
+                {
+                    "type": "functions",
+                    "apiVersion": "2019-08-01",
+                    "name": "container-list",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', variables('Function App'))]"
+                    ],
+                    "properties": {
+                        "config": {
+                            "bindings": [
+                                {
+                                    "authLevel": "function",
+                                    "name": "request",
+                                    "type": "httpTrigger",
+                                    "direction": "in",
+                                    "methods": [
+                                        "get",
+                                        "post"
+                                    ]
+                                },
+                                {
+                                    "name": "res",
+                                    "type": "http",
+                                    "direction": "out"
+                                }
+                            ]
+                        },
+                        "files": {
+                            "run.csx": "#r \"System.Text.Json\"\n\nusing System;\nusing System.Linq;\nusing System.Net;\nusing System.Net.Http;\nusing System.Net.Http.Headers;\nusing System.Text.Json;\nusing System.Threading.Tasks;\nusing Microsoft.Extensions.Primitives;\n\n//  Using https://codebeautify.org/csharp-escape-unescape/ to compress\n//  into a one-liner for ARM Template\n//  Post process:  need to replace \\' by ' as it fails in ARM Templates\npublic static async Task<string[]> Run(\n    HttpRequest request,\n    ILogger log)\n{\n    log.LogInformation(\"Container list starting\");\n\n    var principalId = GetEnvironmentVariable(\"PRINCIPAL_ID\");\n    var identityEndpoint = GetEnvironmentVariable(\"IDENTITY_ENDPOINT\");\n    var identityHeader = GetEnvironmentVariable(\"IDENTITY_HEADER\");\n    var accountName = GetEnvironmentVariable(\"ACCOUNT_NAME\");\n\n    log.LogInformation($\"IDENTITY_ENDPOINT:  {identityEndpoint}\");\n    log.LogInformation($\"IDENTITY_HEADER:  {identityHeader}\");\n\n    var token = await FetchTokenAsync(identityEndpoint, identityHeader, principalId);\n\n    log.LogInformation($\"Token:  {token}\");\n\n    var list = await FetchContainerListAsync(token, accountName);\n\n    log.LogInformation($\"Container list:  {string.Join(\", \", list)}\");\n\n    return list;\n}\n\nprivate async static Task<string> FetchTokenAsync(\n    string identityEndpoint,\n    string identityHeader,\n    string principalId)\n{\n    var client = new HttpClient();\n\n    client.DefaultRequestHeaders.Add(\"X-IDENTITY-HEADER\", identityHeader);\n\n    //  Send HTTP-GET request for a token\n    var response = await client.GetAsync(\n        $\"{identityEndpoint}?resource=https://storage.azure.com&principal_id={principalId}&api-version=2019-08-01\");\n\n    if (response.StatusCode == HttpStatusCode.OK)\n    {\n        var outputText = await response.Content.ReadAsStringAsync();\n        var payload = JsonSerializer.Deserialize<IDictionary<string, object>>(outputText);\n        var token = payload[\"access_token\"].ToString();\n\n        return token;\n    }\n    else\n    {\n        var outputText = await response.Content.ReadAsStringAsync();\n\n        throw new InvalidOperationException($\"Couldn't get the token:  {outputText}\");\n    }\n}\n\nprivate async static Task<string[]> FetchContainerListAsync(string token, string accountName)\n{\n    var client = new HttpClient();\n\n    client.DefaultRequestHeaders.Add(\"x-ms-version\", \"2019-07-07\");\n    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"bearer\", token);\n\n    //  Send HTTP-GET request for a token\n    var response = await client.GetAsync(\n        $\"https://{accountName}.dfs.core.windows.net/?resource=account\");\n\n    if (response.StatusCode == HttpStatusCode.OK)\n    {\n        var outputText = await response.Content.ReadAsStringAsync();\n        var payload = JsonSerializer.Deserialize<IDictionary<string, IDictionary<string, object>[]>>(outputText);\n        var filesystems = payload[\"filesystems\"];\n        var names = filesystems\n            .Select(f=>f[\"name\"].ToString())\n            .ToArray();\n\n        return names;\n    }\n    else\n    {\n        var outputText = await response.Content.ReadAsStringAsync();\n\n        throw new InvalidOperationException($\"Couldn't get the containers:  {outputText}\");\n    }\n}\n\nprivate static string GetEnvironmentVariable(string variableName)\n{\n    var variable = Environment.GetEnvironmentVariable(variableName);\n\n    if (string.IsNullOrWhiteSpace(variable))\n    {\n        throw new ArgumentNullException(variableName, \"Can't find in app settings\");\n    }\n    \n    return variable;\n}"
+                        },
+                        "isDisabled": false
+                    }
+                }
             ]
         },
         {

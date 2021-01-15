@@ -339,11 +339,11 @@
                                 "with-continuation": {
                                     "runAfter": {},
                                     "type": "Compose",
-                                    "inputs": "@concat(outputs('with-directory'), if(equals('', variables('continuation')), '', concat('&continuation=', encodeUriComponent(variables('continuation')))))"
+                                    "inputs": "@concat(outputs('base-url'), if(equals('', variables('continuation')), '', concat('&continuation=', encodeUriComponent(variables('continuation')))))"
                                 }
                             },
                             "runAfter": {
-                                "with-directory": [
+                                "base-url": [
                                     "Succeeded"
                                 ]
                             },
@@ -353,15 +353,6 @@
                                 "timeout": "PT1H"
                             },
                             "type": "Until"
-                        },
-                        "with-directory": {
-                            "runAfter": {
-                                "base-url": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "Compose",
-                            "inputs": "@if(equals('', coalesce(triggerBody()?['directory'], '')), outputs('base-url'), concat(outputs('base-url'), '&directory=', encodeUriComponent(triggerBody()?['directory'])))"
                         }
                     },
                     "outputs": {}

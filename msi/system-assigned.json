@@ -124,7 +124,7 @@
                         "get-names-only": {
                             "inputs": {
                                 "from": "@body('container-list').filesystems",
-                                "select": "name"
+                                "select": "@item().name"
                             },
                             "runAfter": {
                                 "container-list": [
@@ -132,6 +132,19 @@
                                 ]
                             },
                             "type": "Select"
+                        },
+                        "success-response": {
+                            "inputs": {
+                                "body": "@body('get-names-only')",
+                                "statusCode": 200
+                            },
+                            "kind": "http",
+                            "runAfter": {
+                                "get-names-only": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Response"
                         }
                     },
                     "outputs": {}

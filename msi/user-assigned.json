@@ -5,6 +5,7 @@
     },
     "variables": {
         "Unique ID": "[uniqueString(concat(resourceGroup().id, 'msi'))]",
+        "User Identity": "[concat('user-identity-', variables('Unique ID'))]",
         "Storage Name": "[concat('storage', variables('Unique ID'))]",
         "Container 1": "container1",
         "Container 2": "container2",
@@ -14,6 +15,12 @@
         "Storage Reader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
     },
     "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('User Identity')]",
+            "location": "[resourceGroup().location]"
+        },
         {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
@@ -80,9 +87,13 @@
             "name": "[variables('List Container App')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]"
             ],
             "identity": {
-                "type": "SystemAssigned"
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]": {}
+                }
             },
             "properties": {
                 "definition": {
@@ -112,6 +123,7 @@
                             "inputs": {
                                 "authentication": {
                                     "audience": "https://storage.azure.com",
+                                    "identity":"[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]",
                                     "type": "ManagedServiceIdentity"
                                 },
                                 "headers": {
@@ -157,15 +169,16 @@
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-04-01-preview",
             "dependsOn": [
-                "[resourceId('Microsoft.Logic/workflows', variables('List Container App'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('Storage Name'))]"
             ],
             "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('Storage Name'))]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('Storage Reader'))]",
-                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', variables('List Container App')), '2017-07-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('User Identity')), '2018-11-30').principalId]"
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+    }
 }

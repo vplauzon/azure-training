@@ -120,6 +120,18 @@
                                 "method": "GET",
                                 "uri": "https://@{parameters('account')}.dfs.core.windows.net/?resource=account"
                             }
+                        },
+                        "get-names-only": {
+                            "inputs": {
+                                "from": "@body('container-list').filesystems",
+                                "select": "name"
+                            },
+                            "runAfter": {
+                                "container-list": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Select"
                         }
                     },
                     "outputs": {}
